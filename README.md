@@ -1,0 +1,14 @@
+# Ente Wurzel? Video! XML
+
+- XML based video format
+- Each frame is SVG element
+
+## TODO
+- [x] Create XML schema
+- [x] Get FPS from video
+- [x] Read each frame as image
+- [ ] Trace each frame as SVG element
+- [ ] Write results to XML file
+- [ ] Reconstruct video from XML file
+- [ ] Add error handling
+- [ ] Add audio support
