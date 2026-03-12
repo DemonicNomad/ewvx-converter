@@ -5,5 +5,4 @@ edition = "2024"
 
 [dependencies]
 ffmpeg-next = "8"
-image = "0.25"
 vtracer = "0.6"

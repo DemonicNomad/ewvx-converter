@@ -11,7 +11,7 @@ pub fn trace_frame(frame: FrameData) -> String {
 
     let config = Config {
         color_mode: ColorMode::Color,
-        max_iterations: 5,
+        max_iterations: 1,
         ..Config::default()
     };
 

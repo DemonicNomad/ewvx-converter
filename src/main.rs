@@ -2,6 +2,7 @@ mod decode;
 mod trace;
 
 use std::io::{BufWriter, Write};
+use std::thread;
 
 fn main() {
     ffmpeg_next::init().expect("Kein ffmpeg blablabla");
@@ -17,7 +18,6 @@ fn main() {
     run(input, output)
 }
 
-//Wer muss schon parallelisieren
 fn run(input: &str, output: &str) -> () {
     if std::fs::metadata(input).is_err() {
         panic!("AHHHHHHH");
@@ -30,13 +30,30 @@ fn run(input: &str, output: &str) -> () {
     let mut w = BufWriter::new(file);
 
     let frames = decode::decode_frames(input);
+    let total = frames.len();
 
-    for frame in frames {
-        let index = frame.index;
-        let svg = trace::trace_frame(frame);
-        writeln!(w, "{}", svg).unwrap();
-        println!("Sehr effizienter Trace von Frame {}", index);
+    // PARALLELISIERUNG JUHUU
+    for chunk in frames.into_iter().collect::<Vec<_>>().chunks_mut(8) {
+        let frame_chunk: Vec<_> = chunk.iter_mut().map(|f| std::mem::take(f)).collect();
+
+        let chunk_processed: Vec<_> = frame_chunk
+            .into_iter()
+            .map(|frame| {
+                thread::spawn(move || {
+                    let index = frame.index;
+                    let svg = trace::trace_frame(frame);
+                    (index, svg)
+                })
+            })
+            .collect();
+
+        for handle in chunk_processed {
+            let (index, svg) = handle.join().unwrap();
+            writeln!(w, "{}", svg).unwrap();
+            println!("Sehr effizienter Trace von Frame {}", index);
+        }
     }
 
     w.flush().unwrap();
+    println!("Frame-Anzahl {}", total);
 }
