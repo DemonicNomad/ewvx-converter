@@ -7,8 +7,8 @@
 - [x] Create XML schema
 - [x] Get FPS from video
 - [x] Read each frame as image
-- [ ] Trace each frame as SVG element
-- [ ] Write results to XML file
+- [x] Trace each frame as SVG element
+- [x] Write results to XML file
 - [ ] Reconstruct video from XML file
 - [ ] Add error handling
 - [ ] Add audio support
