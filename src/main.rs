@@ -1,7 +1,8 @@
 mod decode;
 mod trace;
+mod xml;
 
-use std::io::{BufWriter, Write};
+use std::io::BufWriter;
 use std::thread;
 
 fn main() {
@@ -18,7 +19,7 @@ fn main() {
     run(input, output)
 }
 
-fn run(input: &str, output: &str) -> () {
+fn run(input: &str, output: &str) {
     if std::fs::metadata(input).is_err() {
         panic!("AHHHHHHH");
     }
@@ -29,10 +30,11 @@ fn run(input: &str, output: &str) -> () {
     let file = std::fs::File::create(output).unwrap();
     let mut w = BufWriter::new(file);
 
+    xml::write_meta_ente(&mut w, fps);
+
     let frames = decode::decode_frames(input);
     let total = frames.len();
 
-    // PARALLELISIERUNG JUHUU
     for chunk in frames.into_iter().collect::<Vec<_>>().chunks_mut(8) {
         let frame_chunk: Vec<_> = chunk.iter_mut().map(|f| std::mem::take(f)).collect();
 
@@ -49,11 +51,12 @@ fn run(input: &str, output: &str) -> () {
 
         for handle in chunk_processed {
             let (index, svg) = handle.join().unwrap();
-            writeln!(w, "{}", svg).unwrap();
-            println!("Sehr effizienter Trace von Frame {}", index);
+            xml::write_frame(&mut w, &svg);
+            println!("Traced frame {}", index);
         }
     }
 
-    w.flush().unwrap();
+    xml::write_frame_end(&mut w);
+
     println!("Frame-Anzahl {}", total);
 }
