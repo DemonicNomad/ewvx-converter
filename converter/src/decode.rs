@@ -1,4 +1,4 @@
-use ffmpeg_next::format::{input, Pixel};
+use ffmpeg_next::format::{Pixel, input};
 use ffmpeg_next::media::Type;
 use ffmpeg_next::software::scaling::{context::Context as ScalingContext, flag::Flags};
 use ffmpeg_next::util::frame::video::Video;
@@ -16,7 +16,8 @@ pub fn get_fps(path: &str) -> f64 {
     let stream = input_context
         .streams()
         .best(Type::Video)
-        .ok_or_else(||panic!()).unwrap();
+        .ok_or_else(|| panic!())
+        .unwrap();
 
     let avg = stream.avg_frame_rate();
 
@@ -32,13 +33,15 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
         let stream = input_context
             .streams()
             .best(Type::Video)
-            .ok_or_else(|| panic!()).unwrap();
+            .ok_or_else(|| panic!())
+            .unwrap();
         stream.index()
     };
 
     let mut decoder = {
         let stream = input_context.stream(video_stream_index).unwrap();
-        let context = ffmpeg_next::codec::context::Context::from_parameters(stream.parameters()).unwrap();
+        let context =
+            ffmpeg_next::codec::context::Context::from_parameters(stream.parameters()).unwrap();
         context.decoder().video().unwrap()
     };
 
@@ -53,7 +56,8 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
         width,
         height,
         Flags::BICUBIC,
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut frames = Vec::new();
     let mut frame_index = 0usize;
@@ -70,7 +74,12 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
             scaler.run(&decoded_frame, &mut rgb_frame).unwrap();
 
             let rgba = stride_ka(rgb_frame.data(0), width, height, rgb_frame.stride(0));
-            frames.push(FrameData { index: frame_index, rgba, width, height });
+            frames.push(FrameData {
+                index: frame_index,
+                rgba,
+                width,
+                height,
+            });
 
             frame_index += 1;
         }

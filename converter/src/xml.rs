@@ -1,4 +1,4 @@
-use std::io::{Write};
+use std::io::Write;
 
 pub fn write_meta_ente(w: &mut impl Write, fps: f64) -> () {
     writeln!(w, r#"<?xml version="1.0" encoding="UTF-8"?>"#).unwrap();

@@ -1,4 +1,4 @@
-use vtracer::{convert, ColorImage, Config, ColorMode};
+use vtracer::{ColorImage, ColorMode, Config, convert};
 
 use crate::decode::FrameData;
 
