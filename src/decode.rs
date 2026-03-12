@@ -72,7 +72,6 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
             let rgba = stride_ka(rgb_frame.data(0), width, height, rgb_frame.stride(0));
             frames.push(FrameData { index: frame_index, rgba, width, height });
 
-            println!("Frame {}", frame_index);
             frame_index += 1;
         }
     }

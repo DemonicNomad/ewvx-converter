@@ -52,7 +52,7 @@ fn run(input: &str, output: &str) {
         for handle in chunk_processed {
             let (index, svg) = handle.join().unwrap();
             xml::write_frame(&mut w, &svg);
-            println!("Traced frame {}", index);
+            println!("Sehr effizientes Tracen von Frame {}", index);
         }
     }
 
