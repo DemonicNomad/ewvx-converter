@@ -1,0 +1,9 @@
+[package]
+name = "ewvx-converter"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ffmpeg-next = "8"
+vtracer = "0.6"
+
