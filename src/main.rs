@@ -1,4 +1,5 @@
 mod decode;
+mod trace;
 
 use std::io::{BufWriter, Write};
 
