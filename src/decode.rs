@@ -3,6 +3,7 @@ use ffmpeg_next::media::Type;
 use ffmpeg_next::software::scaling::{context::Context as ScalingContext, flag::Flags};
 use ffmpeg_next::util::frame::video::Video;
 
+#[derive(Default)]
 pub struct FrameData {
     pub index: usize,
     pub rgba: Vec<u8>,
