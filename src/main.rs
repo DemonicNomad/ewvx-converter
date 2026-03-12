@@ -17,6 +17,7 @@ fn main() {
     run(input, output)
 }
 
+//Wer muss schon parallelisieren
 fn run(input: &str, output: &str) -> () {
     if std::fs::metadata(input).is_err() {
         panic!("AHHHHHHH");
@@ -30,20 +31,12 @@ fn run(input: &str, output: &str) -> () {
 
     let frames = decode::decode_frames(input);
 
-    for frame in &frames {
-        let mut first = true;
-        for pixel in frame.rgba.chunks_exact(4) {
-            if !first {
-                write!(w, " ").unwrap();
-            }
-            write!(w, "{},{},{},{}", pixel[0], pixel[1], pixel[2], pixel[3]).unwrap();
-            first = false;
-        }
-        writeln!(w).unwrap();
-
-        println!("Frame {} ({}x{}, {} pixels)", frame.index, frame.width, frame.height, frame.rgba.len() / 4);
+    for frame in frames {
+        let index = frame.index;
+        let svg = trace::trace_frame(frame);
+        writeln!(w, "{}", svg).unwrap();
+        println!("Sehr effizienter Trace von Frame {}", index);
     }
 
     w.flush().unwrap();
-    eprintln!("Frame-Anzahl {}", frames.len());
 }
