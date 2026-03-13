@@ -1,11 +1,11 @@
 pub struct EwvxData {
-    meta: EwvxMeta,
-    frames: Vec<String>
+    pub meta: EwvxMeta,
+    pub frames: Vec<String>
 }
 
 pub struct EwvxMeta {
-    fps: f32,
-    ente: bool
+    pub fps: f32,
+    pub ente: bool
 }
 
 pub fn parse(input: &str) -> EwvxData {
@@ -15,8 +15,6 @@ pub fn parse(input: &str) -> EwvxData {
 
     let meta = parse_meta_ente(&input[meta_start..meta_end]);
     let frames = parse_frames(&input[frames_start..]);
-
-    println!("{:?}", frames);
 
     EwvxData {
         meta,
