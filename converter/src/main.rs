@@ -9,9 +9,6 @@ fn main() {
     ffmpeg_next::init().expect("Kein ffmpeg blablabla");
 
     let args: Vec<String> = std::env::args().collect();
-    if args.len() != 3 {
-        std::process::exit(1);
-    }
 
     let input = &args[1];
     let output = &args[2];
@@ -25,7 +22,6 @@ fn run(input: &str, output: &str) {
     }
 
     let fps = decode::get_fps(input);
-    println!("FPS: {:.6}", fps);
 
     let file = std::fs::File::create(output).unwrap();
     let mut w = BufWriter::new(file);
@@ -57,6 +53,4 @@ fn run(input: &str, output: &str) {
     }
 
     xml::write_frame_end(&mut w);
-
-    println!("Frame-Anzahl {}", total);
 }
