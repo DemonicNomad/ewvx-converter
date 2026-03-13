@@ -4,6 +4,6 @@ version = "1.0.0"
 edition = "2024"
 
 [dependencies]
-ffmpeg-next = "8"
+ffmpeg-next = { version = "8", features = ["build"] }
 vtracer = "0.6"
 
