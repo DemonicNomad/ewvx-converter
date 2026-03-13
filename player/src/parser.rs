@@ -11,12 +11,16 @@ pub struct EwvxMeta {
 pub fn parse(input: &str) -> EwvxData {
     let meta_start = input.find("<meta-ente>").unwrap();
     let meta_end = input.find("</meta-ente>").unwrap();
+    let frames_start = input.find("<frames>").unwrap();
 
     let meta = parse_meta_ente(&input[meta_start..meta_end]);
+    let frames = parse_frames(&input[frames_start..]);
+
+    println!("{:?}", frames);
 
     EwvxData {
         meta,
-        frames: vec![]
+        frames
     }
 }
 
@@ -28,9 +32,20 @@ fn parse_meta_ente(meta_input: &str) -> EwvxMeta {
     let ente_start = meta_input.find("<ente>").unwrap();
     let ente = meta_input[ente_start + 6..meta_input.find("</ente>").unwrap()]
         .trim().parse::<bool>().unwrap();
-    
+
     EwvxMeta {
         fps,
         ente
     }
+}
+
+fn parse_frames(frame_input: &str) -> Vec<String> {
+    let mut frames: Vec<String> = Vec::new();
+    let frame_raw = frame_input.split("<frame>").skip(1).collect::<Vec<&str>>();
+
+    for frame in frame_raw {
+        frames.push(frame[..frame.find("</frame>").unwrap()].to_string());
+    }
+
+    frames
 }
