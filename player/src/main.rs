@@ -1,30 +1,57 @@
 mod parser;
 
+use std::{env, fs};
+use std::time::{Duration, Instant};
+use minifb::{Window, WindowOptions};
 use resvg::{tiny_skia, usvg};
-use crate::parser::parse;
+use crate::parser::{parse};
 
 fn main() {
-    let d = parse("<meta-ente><fps>24</fps><ente>true</ente></meta-ente>\
-    <frames>\
-        <frame>\
-            <svg version='1.1' xmlns='http://www.w3.org/2000/svg' width='720' height='720'>\
-                <rect x='0' y='0' width='720' height='720' fill='red' />
-            </svg>\
-        </frame>\
-    </frames>");
+    let args: Vec<String> = env::args().collect();
+    let content = fs::read_to_string(&args[1]).unwrap();
 
-    let tree = usvg::Tree::from_data(
-        d.frames[0].as_bytes(),
-        &usvg::Options::default()
+    let ewvx_data = parse(&content);
+
+    let first_tree = usvg::Tree::from_data(
+        ewvx_data.frames[0].as_bytes(),
+        &usvg::Options::default(),
     ).unwrap();
+    let width = first_tree.size().width() as usize;
+    let height = first_tree.size().height() as usize;
 
-    let size = tree.size();
-    let mut pixmap = tiny_skia::Pixmap::new(
-        size.width() as u32,
-        size.height() as u32
-    ).unwrap();
+    let frame_duration = Duration::from_secs_f32(1.0 / ewvx_data.meta.fps);
+    let mut window = Window::new("EWVX Player", width, height, WindowOptions::default()).unwrap();
 
-    resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
-    tiny_skia::Pixmap::save_png(&pixmap, "test.png").unwrap();
+    for svg_str in ewvx_data.frames {
+        if !window.is_open() { break; }
+
+        let start = Instant::now();
+
+        let tree = usvg::Tree::from_data(
+            svg_str.as_bytes(),
+            &usvg::Options::default()
+        ).unwrap();
+
+        let size = tree.size();
+        let mut pixmap = tiny_skia::Pixmap::new(
+            size.width() as u32,
+            size.height() as u32
+        ).unwrap();
+
+        resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
+
+        // ??? RGBA u8 -> 0RGB u32(Bruder ich hab keine Ahnung)
+        let buffer: Vec<u32> = pixmap.data().chunks(4)
+            .map(|c| {
+            ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | (c[2] as u32)
+        }).collect();
+
+        window.update_with_buffer(&buffer, size.width() as usize, size.height() as usize).unwrap();
+
+        let elapsed = start.elapsed();
+        if elapsed < frame_duration {
+            std::thread::sleep(frame_duration - elapsed);
+        }
+    }
 }
 
