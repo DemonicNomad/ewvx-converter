@@ -11,4 +11,5 @@
 - [x] Write results to XML file
 - [ ] Reconstruct video from XML file
 - [ ] Add error handling
+- [ ] Improve metadata (e.g. dimensions, duration)
 - [ ] Add audio support
