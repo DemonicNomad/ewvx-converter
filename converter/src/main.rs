@@ -1,10 +1,11 @@
 mod decode;
 mod trace;
-mod xml;
 
 use std::io::BufWriter;
 use std::thread;
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
+use ewvx::types::EwvxMeta;
+use ewvx::writer;
 
 fn main() -> Result<()> {
     ffmpeg_next::init().context("Failed to initialize ffmpeg")?;
@@ -27,14 +28,30 @@ fn run(input: &str, output: &str) -> Result<()> {
     }
 
     let fps = decode::get_fps(input)?;
+    let frames = decode::decode_frames(input)?;
+
+    let (width, height) = frames.first()
+        .map(|f| (f.width, f.height))
+        .context("No frames decoded from input")?;
+
+    let meta = EwvxMeta {
+        title: None,
+        author: None,
+        created: None,
+        description: None,
+        fps,
+        width,
+        height,
+        frame_count: frames.len() as u32,
+        duration: frames.len() as f64 / fps,
+        ente: false,
+    };
 
     let file = std::fs::File::create(output)
         .with_context(|| format!("Failed to create output: {}", output))?;
     let mut w = BufWriter::new(file);
 
-    xml::write_meta_ente(&mut w, fps)?;
-
-    let frames = decode::decode_frames(input)?;
+    writer::write_header(&mut w, &meta)?;
 
     for chunk in frames.into_iter().collect::<Vec<_>>().chunks_mut(8) {
         let frame_chunk: Vec<_> = chunk.iter_mut().map(|f| std::mem::take(f)).collect();
@@ -54,12 +71,12 @@ fn run(input: &str, output: &str) -> Result<()> {
             let (index, svg) = handle.join()
                 .map_err(|_| anyhow::anyhow!("Thread panicked while tracing frame"))?;
             let svg = svg.with_context(|| format!("Failed to trace frame {}", index))?;
-            xml::write_frame(&mut w, &svg)
+            writer::write_frame(&mut w, index, &svg)
                 .with_context(|| format!("Failed to write frame {}", index))?;
             println!("Sehr effizientes Tracen von Frame {}", index);
         }
     }
 
-    xml::write_frame_end(&mut w)?;
+    writer::write_footer(&mut w)?;
     Ok(())
 }

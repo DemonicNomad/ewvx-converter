@@ -312,10 +312,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ewvx"
+version = "0.1.0-alpha"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "ewvx-converter"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "ewvx",
  "ffmpeg-next",
  "vtracer",
 ]
@@ -325,6 +333,7 @@ name = "ewvx-player"
 version = "1.0.0-rc1"
 dependencies = [
  "anyhow",
+ "ewvx",
  "minifb",
  "resvg",
 ]

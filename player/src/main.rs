@@ -1,11 +1,12 @@
-mod parser;
-
-use std::{env, fs};
+use std::{env, fs, thread};
+use std::sync::mpsc;
 use std::time::{Duration, Instant};
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use minifb::{Window, WindowOptions};
 use resvg::{tiny_skia, usvg};
-use crate::parser::parse;
+use ewvx::parser::parse;
+
+const LOOKAHEAD: usize = 16;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -20,49 +21,60 @@ fn main() -> Result<()> {
     let ewvx_data = parse(&content)
         .context("Failed to parse ewvx data")?;
 
-    let first_tree = usvg::Tree::from_data(
-        ewvx_data.frames[0].as_bytes(),
-        &usvg::Options::default(),
-    ).context("Failed to parse SVG for frame 1")?;
-    let width = first_tree.size().width() as usize;
-    let height = first_tree.size().height() as usize;
+    let width = ewvx_data.meta.width as usize;
+    let height = ewvx_data.meta.height as usize;
 
-    let frame_duration = Duration::from_secs_f32(1.0 / ewvx_data.meta.fps);
+    let frame_duration = Duration::from_secs_f64(1.0 / ewvx_data.meta.fps);
+
+    let (sync_sender, receiver) = mpsc::sync_channel::<Result<Vec<u32>>>(LOOKAHEAD);
+    let frames = ewvx_data.frames;
+
+    let render_handle = thread::spawn(move || {
+        let mut pixmap = tiny_skia::Pixmap::new(width as u32, height as u32)
+            .expect("Failed to create pixmap");
+
+        for frame in &frames {
+            let result = render_frame(&frame.svg, frame.index, &mut pixmap);
+            if sync_sender.send(result).is_err() {
+                break;
+            }
+        }
+    });
+
     let mut window = Window::new("EWVX Player", width, height, WindowOptions::default())
         .context("Failed to create window")?;
 
-    for (i, svg_str) in ewvx_data.frames.iter().enumerate() {
+    for buffer in receiver {
         if !window.is_open() { break; }
 
         let start = Instant::now();
+        let buffer = buffer?;
 
-        let tree = usvg::Tree::from_data(
-            svg_str.as_bytes(),
-            &usvg::Options::default()
-        ).with_context(|| format!("Failed to parse SVG for frame {}", i))?;
-
-        let size = tree.size();
-        let mut pixmap = tiny_skia::Pixmap::new(
-            size.width() as u32,
-            size.height() as u32
-        ).context("Failed to create pixmap")?;
-
-        resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
-
-        // RGBA u8 -> 0RGB u32
-        let buffer: Vec<u32> = pixmap.data().chunks(4)
-            .map(|c| {
-            ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | (c[2] as u32)
-        }).collect();
-
-        window.update_with_buffer(&buffer, size.width() as usize, size.height() as usize)
-            .with_context(|| format!("Failed to update window buffer at frame {}", i))?;
+        window.update_with_buffer(&buffer, width, height)
+            .context("Failed to update window buffer")?;
 
         let elapsed = start.elapsed();
         if elapsed < frame_duration {
-            std::thread::sleep(frame_duration - elapsed);
+            thread::sleep(frame_duration - elapsed);
         }
     }
 
+    let _ = render_handle.join();
     Ok(())
+}
+
+fn render_frame(svg_str: &str, index: usize, pixmap: &mut tiny_skia::Pixmap) -> Result<Vec<u32>> {
+    let tree = usvg::Tree::from_data(
+        svg_str.as_bytes(),
+        &usvg::Options::default(),
+    ).with_context(|| format!("Failed to parse SVG for frame {}", index))?;
+
+    pixmap.fill(tiny_skia::Color::TRANSPARENT);
+    resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
+
+    let buffer: Vec<u32> = pixmap.data().chunks(4)
+        .map(|c| ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | (c[2] as u32))
+        .collect();
+
+    Ok(buffer)
 }
