@@ -17,8 +17,10 @@ ewvx-converter input.mp4 output.ewvx
 ewvx-player output.ewvx
 ```
 
-## Post 1.0 TODO
+## 2.0 TODO
 
-- [ ] Multi-threaded player rendering
-- [ ] Improve metadata (e.g. dimensions, duration)
-- [ ] Add audio support
+- [x] 2.0 Schema
+- [x] Restructure workspace to separate ewvx format data
+- [ ] Add metadata decoding 
+- [ ] Add audio decoding
+- [ ] Add audio parsing and playback
