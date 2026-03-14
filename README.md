@@ -21,6 +21,6 @@ ewvx-player output.ewvx
 
 - [x] 2.0 Schema
 - [x] Restructure workspace to separate ewvx format data
-- [ ] Add metadata decoding 
-- [ ] Add audio decoding
-- [ ] Add audio parsing and playback
+- [x] Update ewvx package for v2.0 schema
+- [ ] Update converter to output v2.0 schema
+- [ ] Update player to read v2.0 schema
