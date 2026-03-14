@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use ffmpeg_next::format::{Pixel, input};
 use ffmpeg_next::media::Type;
 use ffmpeg_next::software::scaling::{context::Context as ScalingContext, flag::Flags};
@@ -11,38 +12,42 @@ pub struct FrameData {
     pub height: u32,
 }
 
-pub fn get_fps(path: &str) -> f64 {
-    let input_context = input(&path).unwrap();
+pub fn get_fps(path: &str) -> Result<f64> {
+    let input_context = input(&path)
+        .with_context(|| format!("Failed to open input file: {}", path))?;
     let stream = input_context
         .streams()
         .best(Type::Video)
-        .ok_or_else(|| panic!())
-        .unwrap();
+        .with_context(|| format!("No video stream found in: {}", path))?;
 
     let avg = stream.avg_frame_rate();
 
     let fps = avg.numerator() as f64 / avg.denominator() as f64;
 
-    fps
+    Ok(fps)
 }
 
-pub fn decode_frames(path: &str) -> Vec<FrameData> {
-    let mut input_context = input(&path).unwrap();
+pub fn decode_frames(path: &str) -> Result<Vec<FrameData>> {
+    let mut input_context = input(&path)
+        .with_context(|| format!("Failed to open input file: {}", path))?;
 
     let video_stream_index = {
         let stream = input_context
             .streams()
             .best(Type::Video)
-            .ok_or_else(|| panic!())
-            .unwrap();
+            .with_context(|| format!("No video stream found in: {}", path))?;
         stream.index()
     };
 
     let mut decoder = {
-        let stream = input_context.stream(video_stream_index).unwrap();
+        let stream = input_context
+            .stream(video_stream_index)
+            .context("Failed to get video stream by index")?;
         let context =
-            ffmpeg_next::codec::context::Context::from_parameters(stream.parameters()).unwrap();
-        context.decoder().video().unwrap()
+            ffmpeg_next::codec::context::Context::from_parameters(stream.parameters())
+                .context("Failed to create codec context")?;
+        context.decoder().video()
+            .context("Failed to create video decoder")?
     };
 
     let width = decoder.width();
@@ -57,7 +62,7 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
         height,
         Flags::BICUBIC,
     )
-    .unwrap();
+    .context("Failed to create scaling context")?;
 
     let mut frames = Vec::new();
     let mut frame_index = 0usize;
@@ -69,9 +74,11 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
             continue;
         }
 
-        decoder.send_packet(&packet).unwrap();
+        decoder.send_packet(&packet)
+            .with_context(|| format!("Failed to send packet for frame {}", frame_index))?;
         while decoder.receive_frame(&mut decoded_frame).is_ok() {
-            scaler.run(&decoded_frame, &mut rgb_frame).unwrap();
+            scaler.run(&decoded_frame, &mut rgb_frame)
+                .with_context(|| format!("Failed to scale frame {}", frame_index))?;
 
             let rgba = stride_ka(rgb_frame.data(0), width, height, rgb_frame.stride(0));
             frames.push(FrameData {
@@ -85,7 +92,7 @@ pub fn decode_frames(path: &str) -> Vec<FrameData> {
         }
     }
 
-    frames
+    Ok(frames)
 }
 
 fn stride_ka(data: &[u8], width: u32, height: u32, stride: usize) -> Vec<u8> {

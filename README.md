@@ -11,7 +11,7 @@
 - [x] Write results to XML file
 - [x] Reconstruct video from XML file
 - [ ] Better Playback Performance(???)
-- [ ] Add error handling
+- [x] Add error messages
 
 ## Post 1.0 TODO
 - [ ] Improve metadata (e.g. dimensions, duration)

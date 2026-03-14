@@ -315,6 +315,7 @@ dependencies = [
 name = "ewvx-converter"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "ffmpeg-next",
  "vtracer",
 ]
@@ -323,6 +324,7 @@ dependencies = [
 name = "ewvx-player"
 version = "1.0.0-rc1"
 dependencies = [
+ "anyhow",
  "minifb",
  "resvg",
 ]

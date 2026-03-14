@@ -1,30 +1,36 @@
 use std::io::Write;
+use anyhow::{Context, Result};
 
-pub fn write_meta_ente(w: &mut impl Write, fps: f64) -> () {
-    writeln!(w, r#"<?xml version="1.0" encoding="UTF-8"?>"#).unwrap();
-    writeln!(w, "<video>").unwrap();
-    writeln!(w, "  <meta-ente>").unwrap();
-    writeln!(w, "    <fps>{:.6}</fps>", fps).unwrap();
-    writeln!(w, "    <ente>true</ente>").unwrap();
-    writeln!(w, "  </meta-ente>").unwrap();
-    writeln!(w, "  <frames>").unwrap();
+pub fn write_meta_ente(w: &mut impl Write, fps: f64) -> Result<()> {
+    writeln!(w, r#"<?xml version="1.0" encoding="UTF-8"?>"#).context("Failed to write XML declaration")?;
+    writeln!(w, "<video>").context("Failed to write <video> tag")?;
+    writeln!(w, "  <meta-ente>").context("Failed to write <meta-ente> tag")?;
+    writeln!(w, "    <fps>{:.6}</fps>", fps).context("Failed to write fps")?;
+    writeln!(w, "    <ente>true</ente>").context("Failed to write ente")?;
+    writeln!(w, "  </meta-ente>").context("Failed to write </meta-ente> tag")?;
+    writeln!(w, "  <frames>").context("Failed to write <frames> tag")?;
+    Ok(())
 }
 
-pub fn write_frame(w: &mut impl Write, svg: &str) -> () {
+pub fn write_frame(w: &mut impl Write, svg: &str) -> Result<()> {
     let svg = strip_svg_xml_declare(svg);
     let svg = strip_start_comment(svg);
-    writeln!(w, "    <frame>").unwrap();
+    writeln!(w, "    <frame>").context("Failed to write <frame> tag")?;
 
     for line in svg.trim().lines() {
-        writeln!(w, "      {}", line).unwrap();
+        writeln!(w, "      {}", line).context("Failed to write frame SVG content")?;
     }
-    writeln!(w, "    </frame>").unwrap();
+    
+    writeln!(w, "    </frame>").context("Failed to write </frame> tag")?;
+    Ok(())
 }
 
-pub fn write_frame_end(w: &mut impl Write) -> () {
-    writeln!(w, "  </frames>").unwrap();
-    writeln!(w, "</video>").unwrap();
+pub fn write_frame_end(w: &mut impl Write) -> Result<()> {
+    writeln!(w, "  </frames>").context("Failed to write </frames> tag")?;
+    writeln!(w, "</video>").context("Failed to write </video> tag")?;
+    Ok(())
 }
+
 fn strip_svg_xml_declare(svg: &str) -> &str {
     let trimmed = svg.trim_start();
     if trimmed.starts_with("<?xml") {

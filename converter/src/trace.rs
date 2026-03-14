@@ -1,8 +1,9 @@
+use anyhow::{Result};
 use vtracer::{ColorImage, ColorMode, Config, convert};
 
 use crate::decode::FrameData;
 
-pub fn trace_frame(frame: FrameData) -> String {
+pub fn trace_frame(frame: FrameData) -> Result<String> {
     let img = ColorImage {
         pixels: frame.rgba,
         width: frame.width as usize,
@@ -16,5 +17,5 @@ pub fn trace_frame(frame: FrameData) -> String {
     };
 
     let svg = convert(img, config).unwrap();
-    svg.to_string()
+    Ok(svg.to_string())
 }
