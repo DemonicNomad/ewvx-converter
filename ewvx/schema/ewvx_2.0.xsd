@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:ewvx="ente-schema:ewvx:2.0"
+           targetNamespace="ente-schema:ewvx:2.0"
+           elementFormDefault="qualified">
+
+    <xs:annotation>
+        <xs:documentation>
+            Ente Wurzel Video XML (.ewvx) — Schema v2.0
+        </xs:documentation>
+    </xs:annotation>
+
+
+        <xs:element name="video">
+            <xs:annotation>
+                <xs:documentation>Root element</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="meta-ente" type="ewvx:metaEnteType"/>
+                    <xs:element name="frames"    type="ewvx:framesType"/>
+                    <xs:element name="audio"     type="ewvx:audioType" minOccurs="0"/>
+                </xs:sequence>
+                <xs:attribute name="version" type="xs:string" use="required" fixed="2.0"/>
+            </xs:complexType>
+        </xs:element>
+
+
+    <xs:complexType name="metaEnteType">
+        <xs:annotation>
+            <xs:documentation>Metadata</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="title"       type="xs:string"          minOccurs="0"/>
+            <xs:element name="author"      type="xs:string"          minOccurs="0"/>
+            <xs:element name="created"     type="xs:dateTime"        minOccurs="0"/>
+            <xs:element name="description" type="xs:string"          minOccurs="0"/>
+            <xs:element name="fps"         type="ewvx:posDecimal"/>
+            <xs:element name="width"       type="xs:positiveInteger"/>
+            <xs:element name="height"      type="xs:positiveInteger"/>
+            <xs:element name="frame-count" type="xs:nonNegativeInteger"/>
+            <xs:element name="duration"    type="ewvx:posDecimal"/>
+            <xs:element name="ente"        type="xs:boolean"/>
+        </xs:sequence>
+    </xs:complexType>
+
+
+    <xs:complexType name="framesType">
+        <xs:annotation>
+            <xs:documentation>List of frame data</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="frame" type="ewvx:frameType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="frameType">
+        <xs:annotation>
+            <xs:documentation>SVG data for each frame</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:any namespace="http://www.w3.org/2000/svg" processContents="lax"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+
+
+    <xs:complexType name="audioType">
+        <xs:annotation>
+            <xs:documentation>List of audio tracks</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="track" type="ewvx:trackType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="trackType">
+        <xs:annotation>
+            <xs:documentation>Track data</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="track-info" type="ewvx:trackInfoType"/>
+            <xs:element name="segments"   type="ewvx:segmentsType"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="lang" type="xs:language"/>
+    </xs:complexType>
+
+    <xs:complexType name="trackInfoType">
+        <xs:annotation>
+            <xs:documentation>Meta info for an audio track</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="sample-rate" type="xs:positiveInteger"/>
+            <xs:element name="bit-depth" type="ewvx:bitDepthType"/>
+            <xs:element name="channels" type="xs:positiveInteger"/>
+            <xs:element name="sample-format" type="ewvx:sampleFormatType"/>
+            <xs:element name="endianness" type="ewvx:endiannessType" minOccurs="0" default="little"/>
+            <xs:element name="total-samples" type="xs:nonNegativeInteger"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="segmentsType">
+        <xs:annotation>
+            <xs:documentation>List of audio segments for a track</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="segment" type="ewvx:segmentType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="segmentType">
+        <xs:annotation>
+            <xs:documentation>
+                Samples stored as whitespace-separated decimal values
+                (signed integers for int formats, [-1.0, 1.0] decimal for float formats),
+                based on channel( L R L R ... in stereo)
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="samples" type="ewvx:sampleListType"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:nonNegativeInteger" use="required">
+            <xs:annotation>
+                <xs:documentation>Starts at zero.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="timestamp" type="ewvx:posDecimalOrZero" use="required">
+            <xs:annotation>
+                <xs:documentation>segment start.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="sample-offset" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="sample-count" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+
+    <xs:simpleType name="posDecimal">
+        <xs:restriction base="xs:decimal">
+            <xs:minExclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="posDecimalOrZero">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="bitDepthType">
+        <xs:restriction base="xs:positiveInteger">
+            <xs:enumeration value="8"/>
+            <xs:enumeration value="16"/>
+            <xs:enumeration value="24"/>
+            <xs:enumeration value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="sampleFormatType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+            <xs:enumeration value="float"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="endiannessType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="little"/>
+            <xs:enumeration value="big"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="sampleListType">
+        <xs:list itemType="xs:decimal"/>
+    </xs:simpleType>
+
+</xs:schema>
+
