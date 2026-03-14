@@ -4,6 +4,7 @@ version = "1.0.0-rc1"
 edition = "2024"
 
 [dependencies]
+anyhow = "1"
 resvg = "0.47"
 minifb = "0.28"
 
