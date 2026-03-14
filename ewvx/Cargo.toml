@@ -7,7 +7,7 @@ description = "Shared library for reading and writing EWVX (Ente Wurzel Video XM
 repository = "https://github.com/DemonicNomad/ewvx-converter"
 readme = "README.md"
 keywords = ["ewvx", "svg", "video", "xml"]
-categories = ["multimedia::video", "data-format::xml", "library::shared"]
+categories = ["multimedia::video", "multimedia::encoding", "command-line-utilities"]
 
 [dependencies]
 anyhow = "1.0"
