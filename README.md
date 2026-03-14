@@ -7,29 +7,6 @@ XML-based video format where each frame is an SVG element.
 - Converts standard video files to `.ewvx` format via frame-by-frame SVG tracing
 - Plays `.ewvx` files 
 
-## Installation (Glaube ich, ka)
-
-### Linux
-
-```bash
-sudo apt install build-essential nasm pkg-config libclang-dev
-
-# Build
-git clone https://github.com/your-user/ewvx-converter.git
-cd ewvx-converter
-cargo build --release
-```
-
-### Windows
-
-```powershell
-# Dependencies: ????
-
-git clone https://github.com/your-user/ewvx-converter.git
-cd ewvx-converter
-cargo build --release
-```
-
 ## Usage
 
 ```bash
