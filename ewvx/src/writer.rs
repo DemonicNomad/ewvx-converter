@@ -2,6 +2,9 @@ use std::io::Write;
 use anyhow::{Context, Result};
 use crate::types::EwvxMeta;
 
+/// Writes the XML declaration, opening `<video>` tag, `<meta-ente>` block,
+/// and opening `<frames>` tag. Call [`write_frame`] for each frame, then
+/// [`write_footer`] to close.
 pub fn write_header(w: &mut impl Write, meta: &EwvxMeta) -> Result<()> {
     writeln!(w, r#"<?xml version="1.0" encoding="UTF-8"?>"#)
         .context("Failed to write XML declaration")?;
@@ -47,6 +50,8 @@ pub fn write_header(w: &mut impl Write, meta: &EwvxMeta) -> Result<()> {
     Ok(())
 }
 
+/// Writes a single `<frame index="N">` element. Any leading XML declaration
+/// or comment in the SVG string is stripped automatically.
 pub fn write_frame(w: &mut impl Write, index: usize, svg: &str) -> Result<()> {
     let svg = strip_svg_xml_declare(svg);
     let svg = strip_start_comment(svg);
@@ -63,6 +68,7 @@ pub fn write_frame(w: &mut impl Write, index: usize, svg: &str) -> Result<()> {
     Ok(())
 }
 
+/// Closes the `<frames>` and `<video>` elements.
 pub fn write_footer(w: &mut impl Write) -> Result<()> {
     writeln!(w, "  </frames>")
         .context("Failed to write </frames> tag")?;

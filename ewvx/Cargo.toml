@@ -2,6 +2,8 @@
 name = "ewvx"
 version = "0.1.0"
 edition = "2024"
+license = "GPL-3.0-only"
+description = "Shared library for reading and writing EWVX (Ente Wurzel Video XML) files"
 
 [dependencies]
 anyhow = "1.0"
