@@ -5,6 +5,7 @@
 //! Currently no support for audio, will be added before 1.0.
 
 pub mod types;
+
 /// Streaming XML writer for the EWVX v2.0 format.
 ///
 /// # Example
@@ -28,6 +29,7 @@ pub mod types;
 /// assert!(output.contains(r#"<frame index="0">"#));
 /// ```
 pub mod writer;
+
 /// XML parser for the EWVX v2.0 format.
 ///
 /// # Example

@@ -1,4 +1,4 @@
-/// Complete in-memory representation of an EWVX file.
+/// Representation of an EWVX file.
 pub struct EwvxData {
     /// Video metadata.
     pub meta: EwvxMeta,
@@ -12,7 +12,7 @@ pub struct EwvxMeta {
     pub title: Option<String>,
     /// Optional author name.
     pub author: Option<String>,
-    /// Optional ISO 8601 creation timestamp.
+    /// Optional creation timestamp.
     pub created: Option<String>,
     /// Optional free-text description.
     pub description: Option<String>,
