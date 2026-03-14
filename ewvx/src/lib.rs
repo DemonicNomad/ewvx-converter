@@ -2,8 +2,8 @@
 //!
 //! Provides the canonical data types, a v2.0 XML writer, and a v2.0 XML parser
 //! used by both the `ewvx-converter` and `ewvx-player` binaries.
-//! Currently no support for audio, will be added before 1.0.
 
+/// Data types representing an EWVX file.
 pub mod types;
 
 /// Streaming XML writer for the EWVX v2.0 format.
@@ -22,7 +22,8 @@ pub mod types;
 /// let mut buf = Vec::new();
 /// writer::write_header(&mut buf, &meta).unwrap();
 /// writer::write_frame(&mut buf, 0, r#"<svg xmlns="http://www.w3.org/2000/svg"/>"#).unwrap();
-/// writer::write_footer(&mut buf).unwrap();
+/// writer::write_frames_end(&mut buf).unwrap();
+/// writer::write_end(&mut buf).unwrap();
 ///
 /// let output = String::from_utf8(buf).unwrap();
 /// assert!(output.contains(r#"version="2.0""#));
@@ -58,5 +59,6 @@ pub mod writer;
 /// assert_eq!(data.meta.width, 100);
 /// assert_eq!(data.frames.len(), 1);
 /// assert_eq!(data.frames[0].index, 0);
+/// assert!(data.audio.is_empty());
 /// ```
 pub mod parser;

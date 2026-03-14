@@ -1,6 +1,10 @@
 use anyhow::{Context, Result, bail};
-use crate::types::{EwvxData, EwvxFrame, EwvxMeta};
+use crate::types::{EwvxData, EwvxFrame, EwvxMeta, EwvxTrack, EwvxTrackInfo, EwvxSegment};
 
+/// Parses an EWVX v2.0 XML string into an [`EwvxData`].
+///
+/// Validates the `version="2.0"` attribute on the root `<video>` element,
+/// then extracts metadata, frames, and optional audio tracks.
 pub fn parse(input: &str) -> Result<EwvxData> {
     validate_version(input)?;
 
@@ -13,8 +17,16 @@ pub fn parse(input: &str) -> Result<EwvxData> {
 
     let meta = parse_meta_ente(&input[meta_start..meta_end])?;
     let frames = parse_frames(&input[frames_start..])?;
+    let audio = match input.find("<audio>") {
+        Some(audio_start) => {
+            let audio_end = input.find("</audio>")
+                .context("Missing </audio> closing tag")?;
+            parse_audio(&input[audio_start..audio_end])?
+        }
+        None => Vec::new(),
+    };
 
-    Ok(EwvxData { meta, frames })
+    Ok(EwvxData { meta, frames, audio })
 }
 
 fn validate_version(input: &str) -> Result<()> {
@@ -133,4 +145,124 @@ fn parse_frame_index(tag_content: &str) -> Result<usize> {
     tag_content[value_start..value_start + value_end]
         .parse::<usize>()
         .context("Failed to parse frame index as integer")
+}
+
+fn parse_audio(audio_input: &str) -> Result<Vec<EwvxTrack>> {
+    let mut tracks = Vec::new();
+    let parts: Vec<&str> = audio_input.split("<track ").skip(1).collect();
+
+    for (i, part) in parts.iter().enumerate() {
+        let track = parse_track(part)
+            .with_context(|| format!("Failed to parse audio track {}", i))?;
+        tracks.push(track);
+    }
+
+    Ok(tracks)
+}
+
+fn parse_track(part: &str) -> Result<EwvxTrack> {
+    let id = parse_attribute(part, "id")?
+        .parse::<u32>()
+        .context("Failed to parse track id")?;
+    let lang = parse_optional_attribute(part, "lang");
+
+    let info_start = part.find("<track-info>")
+        .context("Missing <track-info>")?;
+    let info_end = part.find("</track-info>")
+        .context("Missing </track-info>")?;
+    let info_section = &part[info_start..info_end + "</track-info>".len()];
+    let info = parse_track_info(info_section)?;
+
+    let segments_start = part.find("<segments>")
+        .context("Missing <segments>")?;
+    let segments_end = part.find("</segments>")
+        .context("Missing </segments>")?;
+    let segments_section = &part[segments_start..segments_end];
+    let segments = parse_segments(segments_section)?;
+
+    Ok(EwvxTrack { id, lang, info, segments })
+}
+
+fn parse_track_info(section: &str) -> Result<EwvxTrackInfo> {
+    let sample_rate = parse_required_tag::<u32>(section, "sample-rate")
+        .context("Failed to parse sample-rate")?;
+    let bit_depth = parse_required_tag::<u16>(section, "bit-depth")
+        .context("Failed to parse bit-depth")?;
+    let channels = parse_required_tag::<u16>(section, "channels")
+        .context("Failed to parse channels")?;
+    let total_samples = parse_required_tag::<u64>(section, "total-samples")
+        .context("Failed to parse total-samples")?;
+
+    let sample_format = parse_required_tag::<String>(section, "sample-format")
+        .context("Failed to parse sample-format")?;
+    let endianness = parse_optional_tag(section, "endianness")
+        .unwrap_or_else(|| "little".to_string());
+
+    Ok(EwvxTrackInfo {
+        sample_rate,
+        bit_depth,
+        channels,
+        sample_format,
+        endianness,
+        total_samples,
+    })
+}
+
+fn parse_segments(section: &str) -> Result<Vec<EwvxSegment>> {
+    let mut segments = Vec::new();
+    let parts: Vec<&str> = section.split("<segment ").skip(1).collect();
+
+    for (i, part) in parts.iter().enumerate() {
+        let segment = parse_segment(part)
+            .with_context(|| format!("Failed to parse segment {}", i))?;
+        segments.push(segment);
+    }
+
+    Ok(segments)
+}
+
+fn parse_segment(part: &str) -> Result<EwvxSegment> {
+    let index = parse_attribute(part, "index")?
+        .parse::<usize>()
+        .context("Failed to parse segment index")?;
+    let timestamp = parse_attribute(part, "timestamp")?
+        .parse::<f64>()
+        .context("Failed to parse segment timestamp")?;
+    let sample_offset = parse_attribute(part, "sample-offset")?
+        .parse::<u64>()
+        .context("Failed to parse segment sample-offset")?;
+    let sample_count = parse_attribute(part, "sample-count")?
+        .parse::<u32>()
+        .context("Failed to parse segment sample-count")?;
+
+    let samples_start = part.find("<samples>")
+        .context("Missing <samples>")?;
+    let samples_end = part.find("</samples>")
+        .context("Missing </samples>")?;
+    let samples_str = &part[samples_start + "<samples>".len()..samples_end];
+
+    let samples: Vec<i32> = samples_str.split_whitespace()
+        .map(|s| s.parse::<i32>())
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .context("Failed to parse PCM sample values")?;
+
+    Ok(EwvxSegment { index, timestamp, sample_offset, sample_count, samples })
+}
+
+fn parse_attribute<'a>(tag_content: &'a str, name: &str) -> Result<&'a str> {
+    let needle = format!("{}=\"", name);
+    let start = tag_content.find(&needle)
+        .with_context(|| format!("Missing {} attribute", name))?;
+    let value_start = start + needle.len();
+    let value_end = tag_content[value_start..].find('"')
+        .with_context(|| format!("Malformed {} attribute", name))?;
+    Ok(&tag_content[value_start..value_start + value_end])
+}
+
+fn parse_optional_attribute(tag_content: &str, name: &str) -> Option<String> {
+    let needle = format!("{}=\"", name);
+    let start = tag_content.find(&needle)?;
+    let value_start = start + needle.len();
+    let value_end = tag_content[value_start..].find('"')?;
+    Some(tag_content[value_start..value_start + value_end].to_string())
 }
