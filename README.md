@@ -10,9 +10,9 @@
 - [x] Trace each frame as SVG element
 - [x] Write results to XML file
 - [x] Reconstruct video from XML file
-- [ ] Better Playback Performance(???)
 - [x] Add error messages
 
 ## Post 1.0 TODO
+- [ ] Multithread player
 - [ ] Improve metadata (e.g. dimensions, duration)
 - [ ] Add audio support
