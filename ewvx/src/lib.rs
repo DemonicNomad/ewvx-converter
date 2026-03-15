@@ -1,7 +1,6 @@
-//! Shared library for the EWVX (Ente Wurzel Video XML) format.
+//! Library for the EWVX (Ente Wurzel Video XML) format.
 //!
-//! Provides the canonical data types, a v2.0 XML writer, and a v2.0 XML parser
-//! used by both the `ewvx-converter` and `ewvx-player` binaries.
+//! Provides the data types, a v2.0 EWVX writer, and a v2.0 EWVX parser
 
 /// Data types representing an EWVX file.
 pub mod types;
