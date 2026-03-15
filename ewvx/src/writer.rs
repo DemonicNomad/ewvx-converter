@@ -10,13 +10,12 @@ pub struct FramesDone;
 
 /// EWVX v2.0 writer
 ///
-/// # Example
-/// ```
-/// EwvxWriter::new          // EwvxWriter<W, WritingFrames>
-///   .write_frame()         // &mut self  (repeatable)
-///   .end_frames()          // EwvxWriter<W, FramesDone>
-///     .write_audio()       // &mut self  (optional)
-///     .finish()            // W
+/// ```text
+/// EwvxWriter::new          → EwvxWriter<W, WritingFrames>
+///   .write_frame()         → &mut self  (repeatable)
+///   .end_frames()          → EwvxWriter<W, FramesDone>    (consumes self)
+///     .write_audio()       → &mut self  (optional, at most once)
+///     .finish()            → W          (consumes self)
 /// ```
 pub struct EwvxWriter<W: Write, S> {
     w: W,
@@ -50,9 +49,9 @@ impl<W: Write> EwvxWriter<W, WritingFrames> {
 }
 
 impl<W: Write> EwvxWriter<W, FramesDone> {
-    /// Writes the `<audio>` block containing the given tracks.
+    /// Writes the optional `<audio>` block containing the given tracks.
     ///
-    /// Must be called before [`finish`](Self::finish).
+    /// Call at most once before [`finish`](Self::finish).
     pub fn write_audio(&mut self, tracks: &[EwvxTrack]) -> Result<()> {
         emit_audio(&mut self.w, tracks).context("writing audio")
     }

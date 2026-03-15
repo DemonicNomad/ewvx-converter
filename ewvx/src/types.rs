@@ -1,4 +1,5 @@
 /// Representation of an EWVX file.
+#[derive(Debug, Clone, PartialEq)]
 pub struct EwvxData {
     /// Video metadata.
     pub meta: EwvxMeta,
@@ -9,6 +10,7 @@ pub struct EwvxData {
 }
 
 /// Metadata from the `<meta-ente>` element.
+#[derive(Debug, Clone, PartialEq)]
 pub struct EwvxMeta {
     /// Optional video title.
     pub title: Option<String>,
@@ -33,6 +35,7 @@ pub struct EwvxMeta {
 }
 
 /// A single video frame.
+#[derive(Debug, Clone, PartialEq)]
 pub struct EwvxFrame {
     /// Zero-based frame index.
     pub index: usize,
@@ -41,6 +44,7 @@ pub struct EwvxFrame {
 }
 
 /// A single audio track.
+#[derive(Debug, Clone, PartialEq)]
 pub struct EwvxTrack {
     /// Zero-based track ID.
     pub id: u32,
@@ -53,6 +57,7 @@ pub struct EwvxTrack {
 }
 
 /// Audio format parameters for a track.
+#[derive(Debug, Clone, PartialEq)]
 pub struct EwvxTrackInfo {
     /// Samples per second (e.g. 44100, 48000).
     pub sample_rate: u32,
@@ -69,6 +74,7 @@ pub struct EwvxTrackInfo {
 }
 
 /// A contiguous chunk of interleaved PCM samples.
+#[derive(Debug, Clone, PartialEq)]
 pub struct EwvxSegment {
     /// Zero-based segment index.
     pub index: usize,
