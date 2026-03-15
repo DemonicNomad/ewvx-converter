@@ -1,4 +1,4 @@
-use anyhow::{Result};
+use anyhow::Result;
 use vtracer::{ColorImage, ColorMode, Config, convert};
 
 use crate::decode::FrameData;

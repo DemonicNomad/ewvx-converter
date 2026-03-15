@@ -13,8 +13,8 @@ pub struct FrameData {
 }
 
 pub fn get_fps(path: &str) -> Result<f64> {
-    let input_context = input(&path)
-        .with_context(|| format!("Failed to open input file: {}", path))?;
+    let input_context =
+        input(&path).with_context(|| format!("Failed to open input file: {}", path))?;
     let stream = input_context
         .streams()
         .best(Type::Video)
@@ -28,8 +28,8 @@ pub fn get_fps(path: &str) -> Result<f64> {
 }
 
 pub fn decode_frames(path: &str) -> Result<Vec<FrameData>> {
-    let mut input_context = input(&path)
-        .with_context(|| format!("Failed to open input file: {}", path))?;
+    let mut input_context =
+        input(&path).with_context(|| format!("Failed to open input file: {}", path))?;
 
     let video_stream_index = {
         let stream = input_context
@@ -43,10 +43,11 @@ pub fn decode_frames(path: &str) -> Result<Vec<FrameData>> {
         let stream = input_context
             .stream(video_stream_index)
             .context("Failed to get video stream by index")?;
-        let context =
-            ffmpeg_next::codec::context::Context::from_parameters(stream.parameters())
-                .context("Failed to create codec context")?;
-        context.decoder().video()
+        let context = ffmpeg_next::codec::context::Context::from_parameters(stream.parameters())
+            .context("Failed to create codec context")?;
+        context
+            .decoder()
+            .video()
             .context("Failed to create video decoder")?
     };
 
@@ -74,10 +75,12 @@ pub fn decode_frames(path: &str) -> Result<Vec<FrameData>> {
             continue;
         }
 
-        decoder.send_packet(&packet)
+        decoder
+            .send_packet(&packet)
             .with_context(|| format!("Failed to send packet for frame {}", frame_index))?;
         while decoder.receive_frame(&mut decoded_frame).is_ok() {
-            scaler.run(&decoded_frame, &mut rgb_frame)
+            scaler
+                .run(&decoded_frame, &mut rgb_frame)
                 .with_context(|| format!("Failed to scale frame {}", frame_index))?;
 
             let rgba = stride_ka(rgb_frame.data(0), width, height, rgb_frame.stride(0));

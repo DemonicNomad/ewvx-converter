@@ -313,9 +313,7 @@ dependencies = [
 
 [[package]]
 name = "ewvx"
-version = "0.1.0-alpha"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b99a8806e573ab8ce81b68523102ddcf5c80cc7847da038a308180dcfa00ed20"
+version = "1.0.0"
 dependencies = [
  "anyhow",
 ]
@@ -323,6 +321,8 @@ dependencies = [
 [[package]]
 name = "ewvx"
 version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83a6ebb9f3d5a66faac9f150b31a26d8fe2b1b53af4891fef24c56c65e8a85da"
 dependencies = [
  "anyhow",
 ]
@@ -332,7 +332,7 @@ name = "ewvx-converter"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "ewvx 0.1.0-alpha",
+ "ewvx 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ffmpeg-next",
  "vtracer",
 ]
@@ -342,7 +342,7 @@ name = "ewvx-player"
 version = "1.0.0-rc1"
 dependencies = [
  "anyhow",
- "ewvx 0.1.0-alpha",
+ "ewvx 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minifb",
  "resvg",
 ]

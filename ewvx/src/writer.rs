@@ -1,7 +1,7 @@
+use crate::types::{EwvxMeta, EwvxTrack};
+use anyhow::{Context, Result};
 use std::io::{self, Write};
 use std::marker::PhantomData;
-use anyhow::{Context, Result};
-use crate::types::{EwvxMeta, EwvxTrack};
 
 /// Typestate: accepting `<frame>` elements.
 pub struct WritingFrames;
@@ -27,7 +27,10 @@ impl<W: Write> EwvxWriter<W, WritingFrames> {
     /// the full `<meta-ente>` block, and the opening `<frames>` tag.
     pub fn new(mut w: W, meta: &EwvxMeta) -> Result<Self> {
         emit_header(&mut w, meta).context("writing EWVX header")?;
-        Ok(Self { w, _state: PhantomData })
+        Ok(Self {
+            w,
+            _state: PhantomData,
+        })
     }
 
     /// Writes a single `<frame index="N">` element.
@@ -35,8 +38,7 @@ impl<W: Write> EwvxWriter<W, WritingFrames> {
     /// Any leading `<?xml …?>` declaration or `<!-- … -->` comment in the SVG
     /// string is stripped automatically.
     pub fn write_frame(&mut self, index: usize, svg: &str) -> Result<()> {
-        emit_frame(&mut self.w, index, svg)
-            .with_context(|| format!("writing frame {index}"))
+        emit_frame(&mut self.w, index, svg).with_context(|| format!("writing frame {index}"))
     }
 
     /// Closes the `<frames>` element and transitions to [`FramesDone`],
@@ -44,7 +46,10 @@ impl<W: Write> EwvxWriter<W, WritingFrames> {
     /// [`finish`](EwvxWriter::finish) can be called.
     pub fn end_frames(mut self) -> Result<EwvxWriter<W, FramesDone>> {
         writeln!(self.w, "  </frames>").context("closing frames")?;
-        Ok(EwvxWriter { w: self.w, _state: PhantomData })
+        Ok(EwvxWriter {
+            w: self.w,
+            _state: PhantomData,
+        })
     }
 }
 
@@ -117,9 +122,17 @@ fn emit_audio(w: &mut impl Write, tracks: &[EwvxTrack]) -> io::Result<()> {
         writeln!(w, "        <sample-rate>{}</sample-rate>", info.sample_rate)?;
         writeln!(w, "        <bit-depth>{}</bit-depth>", info.bit_depth)?;
         writeln!(w, "        <channels>{}</channels>", info.channels)?;
-        writeln!(w, "        <sample-format>{}</sample-format>", info.sample_format)?;
+        writeln!(
+            w,
+            "        <sample-format>{}</sample-format>",
+            info.sample_format
+        )?;
         writeln!(w, "        <endianness>{}</endianness>", info.endianness)?;
-        writeln!(w, "        <total-samples>{}</total-samples>", info.total_samples)?;
+        writeln!(
+            w,
+            "        <total-samples>{}</total-samples>",
+            info.total_samples
+        )?;
         writeln!(w, "      </track-info>")?;
 
         writeln!(w, "      <segments>")?;
