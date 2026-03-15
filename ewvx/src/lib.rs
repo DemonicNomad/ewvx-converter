@@ -31,11 +31,11 @@ pub mod types;
 /// ```
 pub mod writer;
 
-/// XML parser for the EWVX v2.0 format.
+/// XML reader for the EWVX v2.0 format.
 ///
 /// # Example
 /// ```
-/// use ewvx::parser;
+/// use ewvx::reader;
 ///
 /// let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
 /// <video version="2.0" xmlns="ente-schema:ewvx:2.0">
@@ -54,11 +54,11 @@ pub mod writer;
 ///   </frames>
 /// </video>"#;
 ///
-/// let data = parser::parse(xml).unwrap();
+/// let data = reader::read(xml).unwrap();
 /// assert_eq!(data.meta.fps, 24.0);
 /// assert_eq!(data.meta.width, 100);
 /// assert_eq!(data.frames.len(), 1);
 /// assert_eq!(data.frames[0].index, 0);
 /// assert!(data.audio.is_empty());
 /// ```
-pub mod parser;
+pub mod reader;
