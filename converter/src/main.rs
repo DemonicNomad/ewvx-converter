@@ -2,7 +2,6 @@ mod decode;
 mod trace;
 
 use anyhow::{Context, Result, bail};
-use ewvx::types::EwvxMeta;
 use ewvx::writer::EwvxWriter;
 use std::io::BufWriter;
 use std::thread;
@@ -27,26 +26,15 @@ fn run(input: &str, output: &str) -> Result<()> {
         bail!("Input not found: {}", input);
     }
 
-    let fps = decode::get_fps(input)?;
-    let frames = decode::decode_frames(input)?;
+    let decode::DecodedVideo {
+        meta,
+        frames,
+        audio_tracks,
+    } = decode::decode_all(input)?;
 
-    let (width, height) = frames
-        .first()
-        .map(|f| (f.width, f.height))
-        .context("No frames decoded from input")?;
-
-    let meta = EwvxMeta {
-        title: None,
-        author: None,
-        created: None,
-        description: None,
-        fps,
-        width,
-        height,
-        frame_count: frames.len() as u32,
-        duration: frames.len() as f64 / fps,
-        ente: false,
-    };
+    if frames.is_empty() {
+        bail!("No frames decoded from input");
+    }
 
     let file = std::fs::File::create(output)
         .with_context(|| format!("Failed to create output: {}", output))?;
@@ -76,11 +64,17 @@ fn run(input: &str, output: &str) -> Result<()> {
             let svg = svg.with_context(|| format!("Failed to trace frame {}", index))?;
             writer.write_frame(index, &svg)
                 .with_context(|| format!("Failed to write frame {}", index))?;
-            println!("Sehr effizientes Tracen von Frame {}", index);
         }
     }
 
-    let writer = writer.end_frames().context("Failed to close frames")?;
+    let mut writer = writer.end_frames().context("Failed to close frames")?;
+
+    if !audio_tracks.is_empty() {
+        writer
+            .write_audio(&audio_tracks)
+            .context("Failed to write audio tracks")?;
+    }
+
     writer.finish().context("Failed to close EWVX document")?;
     Ok(())
 }

@@ -22,5 +22,5 @@ ewvx-player output.ewvx
 - [x] 2.0 Schema
 - [x] Restructure workspace to separate ewvx format data
 - [x] Update ewvx package for v2.0 schema
-- [ ] Update converter to output v2.0 schema
+- [x] Update converter to output v2.0 schema
 - [ ] Update player to read v2.0 schema
