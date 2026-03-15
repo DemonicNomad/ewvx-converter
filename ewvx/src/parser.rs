@@ -249,14 +249,14 @@ fn parse_segment(part: &str) -> Result<EwvxSegment> {
     Ok(EwvxSegment { index, timestamp, sample_offset, sample_count, samples })
 }
 
-fn parse_attribute<'a>(tag_content: &'a str, name: &str) -> Result<&'a str> {
+fn parse_attribute(tag_content: &str, name: &str) -> Result<String> {
     let needle = format!("{}=\"", name);
     let start = tag_content.find(&needle)
         .with_context(|| format!("Missing {} attribute", name))?;
     let value_start = start + needle.len();
     let value_end = tag_content[value_start..].find('"')
         .with_context(|| format!("Malformed {} attribute", name))?;
-    Ok(&tag_content[value_start..value_start + value_end])
+    Ok(tag_content[value_start..value_start + value_end].to_string())
 }
 
 fn parse_optional_attribute(tag_content: &str, name: &str) -> Option<String> {

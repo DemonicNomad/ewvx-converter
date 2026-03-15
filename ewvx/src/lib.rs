@@ -6,12 +6,12 @@
 /// Data types representing an EWVX file.
 pub mod types;
 
-/// Streaming XML writer for the EWVX v2.0 format.
+/// Typestate XML writer for the EWVX v2.0 format.
 ///
 /// # Example
 /// ```
 /// use ewvx::types::EwvxMeta;
-/// use ewvx::writer;
+/// use ewvx::writer::EwvxWriter;
 ///
 /// let meta = EwvxMeta {
 ///     title: None, author: None, created: None, description: None,
@@ -19,11 +19,11 @@ pub mod types;
 ///     frame_count: 1, duration: 1.0 / 24.0, ente: true,
 /// };
 ///
-/// let mut buf = Vec::new();
-/// writer::write_header(&mut buf, &meta).unwrap();
-/// writer::write_frame(&mut buf, 0, r#"<svg xmlns="http://www.w3.org/2000/svg"/>"#).unwrap();
-/// writer::write_frames_end(&mut buf).unwrap();
-/// writer::write_end(&mut buf).unwrap();
+/// let buf = Vec::new();
+/// let mut w = EwvxWriter::new(buf, &meta).unwrap();
+/// w.write_frame(0, r#"<svg xmlns="http://www.w3.org/2000/svg"/>"#).unwrap();
+/// let mut w = w.end_frames().unwrap();
+/// let buf = w.finish().unwrap();
 ///
 /// let output = String::from_utf8(buf).unwrap();
 /// assert!(output.contains(r#"version="2.0""#));
