@@ -1,10 +1,7 @@
 use crate::types::{EwvxData, EwvxFrame, EwvxMeta, EwvxSegment, EwvxTrack, EwvxTrackInfo};
 use anyhow::{Context, Result, bail};
 
-/// Parses an EWVX v2.0 XML string into an [`EwvxData`].
-///
-/// Validates the `version="2.0"` attribute on the root `<video>` element,
-/// then extracts metadata, frames, and optional audio tracks.
+/// Parses an EWVX v2.1 XML string into an [`EwvxData`].
 pub fn read(input: &str) -> Result<EwvxData> {
     validate_version(input)?;
 
@@ -40,9 +37,9 @@ fn validate_version(input: &str) -> Result<()> {
             .context("Malformed <video> tag")?;
     let tag = &input[tag_start..tag_end];
 
-    let version = read_attribute(tag, "version").context("Missing version attribute on <video>")?;
-    if version != "2.0" {
-        bail!("Unsupported EWVX version: {version} (expected 2.0)");
+    let version = read_attribute(tag, "xmlns").context("Missing schema attribute on <video>")?;
+    if version[version.len()-3 .. version.len()] != *"2.1" {
+        bail!("Unsupported EWVX version: {version} (expected 2.1)");
     }
     Ok(())
 }

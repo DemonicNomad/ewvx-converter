@@ -1,9 +1,9 @@
 [package]
 name = "ewvx"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2024"
 license = "GPL-3.0-only"
-description = "Shared library for reading and writing EWVX (Ente Wurzel Video XML) files"
+description = "Library for reading and writing EWVX (Ente Wurzel Video XML) files"
 repository = "https://github.com/DemonicNomad/ewvx-converter"
 readme = "README.md"
 keywords = ["ewvx", "svg", "video", "xml"]

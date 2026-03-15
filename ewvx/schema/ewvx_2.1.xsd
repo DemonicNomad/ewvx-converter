@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:ewvx="ente-schema:ewvx:2.0"
-           targetNamespace="ente-schema:ewvx:2.0"
+           xmlns:ewvx="ente-schema:ewvx:2.1"
+           targetNamespace="ente-schema:ewvx:2.1"
            elementFormDefault="qualified">
 
     <xs:annotation>
         <xs:documentation>
-            Ente Wurzel Video XML (.ewvx) — Schema v2.0
+            Ente Wurzel Video XML (.ewvx) — Schema v2.1
         </xs:documentation>
     </xs:annotation>
 
@@ -21,7 +21,6 @@
                     <xs:element name="frames"    type="ewvx:framesType"/>
                     <xs:element name="audio"     type="ewvx:audioType" minOccurs="0"/>
                 </xs:sequence>
-                <xs:attribute name="version" type="xs:string" use="required" fixed="2.0"/>
             </xs:complexType>
         </xs:element>
 

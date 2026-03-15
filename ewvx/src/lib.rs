@@ -1,6 +1,6 @@
 //! Library for the EWVX (Ente Wurzel Video XML) format.
 //!
-//! Provides the data types, a v2.0 EWVX writer, and a v2.0 EWVX parser
+//! Provides the data types, a v2.1 EWVX writer, and a v2.1 EWVX parser
 
 /// Data types representing an EWVX file.
 pub mod types;
@@ -25,7 +25,7 @@ pub mod types;
 /// let buf = w.finish().unwrap();
 ///
 /// let output = String::from_utf8(buf).unwrap();
-/// assert!(output.contains(r#"version="2.0""#));
+/// assert!(output.contains(r#"ente-schema:ewvx:2.1"#));
 /// assert!(output.contains(r#"<frame index="0">"#));
 /// ```
 pub mod writer;
@@ -37,7 +37,7 @@ pub mod writer;
 /// use ewvx::reader;
 ///
 /// let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
-/// <video version="2.0" xmlns="ente-schema:ewvx:2.0">
+/// <video xmlns="ente-schema:ewvx:2.1">
 ///   <meta-ente>
 ///     <fps>24.000000</fps>
 ///     <width>100</width>

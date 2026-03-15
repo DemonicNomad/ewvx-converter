@@ -8,7 +8,7 @@ pub struct WritingFrames;
 /// Typestate: `<frames>` closed — may write `<audio>` or [`finish`](EwvxWriter::finish).
 pub struct FramesDone;
 
-/// EWVX v2.0 writer
+/// EWVX v2.1 writer
 ///
 /// ```text
 /// EwvxWriter::new          → EwvxWriter<W, WritingFrames>
@@ -70,7 +70,7 @@ impl<W: Write> EwvxWriter<W, FramesDone> {
 
 fn emit_header(w: &mut impl Write, meta: &EwvxMeta) -> io::Result<()> {
     writeln!(w, r#"<?xml version="1.0" encoding="UTF-8"?>"#)?;
-    writeln!(w, r#"<video version="2.0" xmlns="ente-schema:ewvx:2.0">"#)?;
+    writeln!(w, r#"<video xmlns="ente-schema:ewvx:2.1">"#)?;
 
     writeln!(w, "  <meta-ente>")?;
     if let Some(v) = &meta.title {
