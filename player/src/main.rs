@@ -1,12 +1,12 @@
 use anyhow::{Context, Result, bail};
-use ewvx::parser::parse;
+use ewvx::reader;
 use minifb::{Window, WindowOptions};
 use resvg::{tiny_skia, usvg};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use std::{env, fs, thread};
 
-const LOOKAHEAD: usize = 16;
+const PRERENDER_FRAMES: usize = 16;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -18,15 +18,15 @@ fn main() -> Result<()> {
     let content = fs::read_to_string(&args[1])
         .with_context(|| format!("Failed to read ewvx file: {}", args[1]))?;
 
-    let ewvx_data = parse(&content).context("Failed to parse ewvx data")?;
+    let ewvx = reader::read(&content).context("Failed to parse ewvx data")?;
 
-    let width = ewvx_data.meta.width as usize;
-    let height = ewvx_data.meta.height as usize;
+    let width = ewvx.meta.width as usize;
+    let height = ewvx.meta.height as usize;
+    let frame_duration = Duration::from_secs_f64(1.0 / ewvx.meta.fps);
 
-    let frame_duration = Duration::from_secs_f64(1.0 / ewvx_data.meta.fps);
-
-    let (sync_sender, receiver) = mpsc::sync_channel::<Result<Vec<u32>>>(LOOKAHEAD);
-    let frames = ewvx_data.frames;
+    let (sender, receiver) =
+        mpsc::sync_channel::<Result<Vec<u32>>>(PRERENDER_FRAMES);
+    let frames = ewvx.frames;
 
     let render_handle = thread::spawn(move || {
         let mut pixmap =
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
 
         for frame in &frames {
             let result = render_frame(&frame.svg, frame.index, &mut pixmap);
-            if sync_sender.send(result).is_err() {
+            if sender.send(result).is_err() {
                 break;
             }
         }
@@ -72,6 +72,7 @@ fn render_frame(svg_str: &str, index: usize, pixmap: &mut tiny_skia::Pixmap) -> 
     pixmap.fill(tiny_skia::Color::TRANSPARENT);
     resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
+    //??? u8 -> u32 I guess
     let buffer: Vec<u32> = pixmap
         .data()
         .chunks(4)
