@@ -29,9 +29,9 @@ fn main() -> Result<()> {
     let height = ewvx.meta.height as usize;
     let frame_duration = Duration::from_secs_f64(1.0 / ewvx.meta.fps);
 
-    let _device_sink = DeviceSinkBuilder::open_default_sink()
+    let device_sink = DeviceSinkBuilder::open_default_sink()
         .context("Failed to open audio output")?;
-    let player = Player::connect_new(_device_sink.mixer());
+    let player = Player::connect_new(device_sink.mixer());
 
     if !ewvx.audio.is_empty() {
         let source = build_audio_source(&ewvx.audio[0])?;
