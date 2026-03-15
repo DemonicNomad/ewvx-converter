@@ -1,3 +1,3 @@
 [workspace]
-members = ["converter", "player", "ewvx"]
+members = ["converter", "player", "ewvx", "extract"]
 resolver = "3"
