@@ -1,12 +1,14 @@
 use anyhow::{Context, Result, bail};
 use ewvx::reader;
 use minifb::{Window, WindowOptions};
+use rayon::prelude::*;
 use resvg::{tiny_skia, usvg};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use std::{env, fs, thread};
 
-const PRERENDER_FRAMES: usize = 16;
+const PRERENDER_FRAMES: usize = 32;
+const RENDER_BATCH: usize = 8;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -29,13 +31,20 @@ fn main() -> Result<()> {
     let frames = ewvx.frames;
 
     let render_handle = thread::spawn(move || {
-        let mut pixmap =
-            tiny_skia::Pixmap::new(width as u32, height as u32).expect("Failed to create pixmap");
+        for chunk in frames.chunks(RENDER_BATCH) {
+            let rendered: Vec<Result<Vec<u32>>> = chunk
+                .par_iter()
+                .map(|frame| {
+                    let mut pixmap = tiny_skia::Pixmap::new(width as u32, height as u32)
+                            .expect("Failed to create pixmap");
+                    render_frame(&frame.svg, frame.index, &mut pixmap)
+                })
+                .collect();
 
-        for frame in &frames {
-            let result = render_frame(&frame.svg, frame.index, &mut pixmap);
-            if sender.send(result).is_err() {
-                break;
+            for result in rendered {
+                if sender.send(result).is_err() {
+                    return;
+                }
             }
         }
     });
@@ -43,21 +52,25 @@ fn main() -> Result<()> {
     let mut window = Window::new("EWVX Player", width, height, WindowOptions::default())
         .context("Failed to create window")?;
 
+    let playback_start = Instant::now();
+    let mut frame_num: u64 = 0;
+
     for buffer in receiver {
         if !window.is_open() {
             break;
         }
 
-        let start = Instant::now();
         let buffer = buffer?;
 
         window
             .update_with_buffer(&buffer, width, height)
             .context("Failed to update window buffer")?;
 
-        let elapsed = start.elapsed();
-        if elapsed < frame_duration {
-            thread::sleep(frame_duration - elapsed);
+        frame_num += 1;
+        let target = playback_start + frame_duration * frame_num as u32;
+        let now = Instant::now();
+        if now < target {
+            thread::sleep(target - now);
         }
     }
 

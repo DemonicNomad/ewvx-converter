@@ -486,6 +486,7 @@ dependencies = [
  "anyhow",
  "ewvx 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "minifb",
+ "rayon",
  "resvg",
  "rodio",
 ]
