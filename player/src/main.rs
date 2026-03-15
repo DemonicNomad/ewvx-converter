@@ -1,8 +1,11 @@
 use anyhow::{Context, Result, bail};
 use ewvx::reader;
+use ewvx::types::EwvxTrack;
 use minifb::{Window, WindowOptions};
 use rayon::prelude::*;
 use resvg::{tiny_skia, usvg};
+use rodio::{Player, buffer::SamplesBuffer, stream::DeviceSinkBuilder};
+use std::num::NonZero;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use std::{env, fs, thread};
@@ -26,6 +29,16 @@ fn main() -> Result<()> {
     let height = ewvx.meta.height as usize;
     let frame_duration = Duration::from_secs_f64(1.0 / ewvx.meta.fps);
 
+    let _device_sink = DeviceSinkBuilder::open_default_sink()
+        .context("Failed to open audio output")?;
+    let player = Player::connect_new(_device_sink.mixer());
+
+    if !ewvx.audio.is_empty() {
+        let source = build_audio_source(&ewvx.audio[0])?;
+        player.append(source);
+        player.pause();
+    }
+
     let (sender, receiver) =
         mpsc::sync_channel::<Result<Vec<u32>>>(PRERENDER_FRAMES);
     let frames = ewvx.frames;
@@ -36,7 +49,7 @@ fn main() -> Result<()> {
                 .par_iter()
                 .map(|frame| {
                     let mut pixmap = tiny_skia::Pixmap::new(width as u32, height as u32)
-                            .expect("Failed to create pixmap");
+                        .expect("Failed to create pixmap");
                     render_frame(&frame.svg, frame.index, &mut pixmap)
                 })
                 .collect();
@@ -52,6 +65,7 @@ fn main() -> Result<()> {
     let mut window = Window::new("EWVX Player", width, height, WindowOptions::default())
         .context("Failed to create window")?;
 
+    player.play();
     let playback_start = Instant::now();
     let mut frame_num: u64 = 0;
 
@@ -74,8 +88,31 @@ fn main() -> Result<()> {
         }
     }
 
+    player.sleep_until_end();
+
     let _ = render_handle.join();
     Ok(())
+}
+
+fn build_audio_source(track: &EwvxTrack) -> Result<SamplesBuffer> {
+    let info = &track.info;
+
+    let total_interleaved =
+        info.total_samples as usize * info.channels as usize;
+    let mut pcm = Vec::<f32>::with_capacity(total_interleaved);
+
+    for segment in &track.segments {
+        for &sample in &segment.samples {
+            pcm.push(sample as f32 / 32768.0);
+        }
+    }
+
+    let channels = NonZero::new(info.channels)
+        .context("channels must be > 0")?;
+    let sample_rate = NonZero::new(info.sample_rate)
+        .context("sample_rate must be > 0")?;
+
+    Ok(SamplesBuffer::new(channels, sample_rate, pcm))
 }
 
 fn render_frame(svg_str: &str, index: usize, pixmap: &mut tiny_skia::Pixmap) -> Result<Vec<u32>> {
@@ -85,7 +122,6 @@ fn render_frame(svg_str: &str, index: usize, pixmap: &mut tiny_skia::Pixmap) -> 
     pixmap.fill(tiny_skia::Color::TRANSPARENT);
     resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
-    //??? u8 -> u32 I guess
     let buffer: Vec<u32> = pixmap
         .data()
         .chunks(4)
