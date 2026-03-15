@@ -3,7 +3,7 @@ mod trace;
 
 use anyhow::{Context, Result, bail};
 use ewvx::types::EwvxMeta;
-use ewvx::writer;
+use ewvx::writer::EwvxWriter;
 use std::io::BufWriter;
 use std::thread;
 
@@ -50,9 +50,10 @@ fn run(input: &str, output: &str) -> Result<()> {
 
     let file = std::fs::File::create(output)
         .with_context(|| format!("Failed to create output: {}", output))?;
-    let mut w = BufWriter::new(file);
+    let buf = BufWriter::new(file);
 
-    writer::write_header(&mut w, &meta)?;
+    let mut writer = EwvxWriter::new(buf, &meta)
+        .context("Failed to write EWVX header")?;
 
     for chunk in frames.into_iter().collect::<Vec<_>>().chunks_mut(8) {
         let frame_chunk: Vec<_> = chunk.iter_mut().map(|f| std::mem::take(f)).collect();
@@ -73,12 +74,13 @@ fn run(input: &str, output: &str) -> Result<()> {
                 .join()
                 .map_err(|_| anyhow::anyhow!("Thread panicked while tracing frame"))?;
             let svg = svg.with_context(|| format!("Failed to trace frame {}", index))?;
-            writer::write_frame(&mut w, index, &svg)
+            writer.write_frame(index, &svg)
                 .with_context(|| format!("Failed to write frame {}", index))?;
             println!("Sehr effizientes Tracen von Frame {}", index);
         }
     }
 
-    writer::write_footer(&mut w)?;
+    let writer = writer.end_frames().context("Failed to close frames")?;
+    writer.finish().context("Failed to close EWVX document")?;
     Ok(())
 }
