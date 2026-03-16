@@ -482,6 +482,12 @@ dependencies = [
 [[package]]
 name = "ewvx-extract"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ewvx 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "minifb",
+ "resvg",
+]
 
 [[package]]
 name = "ewvx-player"
